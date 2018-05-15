@@ -12,6 +12,7 @@ haskell specific and not totally necessary, since ghc can easily read .lhs files
  - pdflatex(1) Available in teX distributions (I used texlive-base on openbsd)
  - awk(1)
  - make(1)
+ - sed(1)
 
 ## Use
 
