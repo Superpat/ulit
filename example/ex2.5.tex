@@ -1,0 +1,138 @@
+\documentclass{article}
+
+\usepackage{listings}
+\usepackage{color}
+
+\renewcommand\lstlistingname{Quelltext}
+
+\lstset{
+	language=Haskell,
+	basicstyle=\small\sffamily,
+	numbers=none,
+	numberstyle=\tiny,
+	frame=tb,
+	tabsize=4,
+	columns=fixed,
+	showstringspaces=false,
+	keepspaces,
+	commentstyle=\color{red}
+	keywordstyle=\color{blue}
+}
+
+\title{Exercice 2.5}
+\date{18-05-13}
+\author{Patrick Marchand}
+
+\begin{document}
+\maketitle
+\pagenumbering{gobble}
+\newpage
+\pagenumbering{arabic}
+
+Ce module est ecrit en haskell litteraire et decrit un petit langage 
+avec des Integers, des variables et des lambdas.
+
+\begin{lstlisting}
+module Main where
+\end{lstlisting}
+
+\section{Grammaire}
+
+\paragraph
+L'on definit en premier des types qui decrivent les elements de
+notre grammaire.
+
+\begin{lstlisting}
+type Var = String
+
+data Exp = Enum Int
+  | Evar Var
+  | Elet Var Exp Exp
+  | Ecall Exp Exp
+\end{lstlisting}
+
+\paragraph
+Ensuite on rajoute une expression 
+pour representer les lambdas,
+ceci est une fonction anonyme 
+qui prend un nom de variable et une 
+expression a laquelle l'appliquer.
+
+\begin{lstlisting}
+  | Elambda Var Exp
+\end{lstlisting}
+
+\paragraph
+La valeur Vprim represente des fonctions qui existent 
+deja dans le contexte, pour simplifier
+je m'en suis debarasser et j'utilise les lambdas 
+pour toute formes de fonctions.
+
+\begin{lstlisting}
+data Val = Vnum Int
+  | Vlambda (Val -> Val)
+\end{lstlisting}
+
+\newpage
+\section{Evaluation}
+
+\paragraph
+Par apres nous avons besoin d'une fonction
+pour rechercher les valeurs des variables
+dans un contexte donner.
+
+\subparagraph
+Elle trouve une clee dans une liste de paires et 
+retourne la valeur associer. J'ai changer l'ordre des arguments 
+dans la signature afin d'etre plus consistant avec la fonction eval.
+
+\begin{lstlisting}
+elookup :: Eq a => [(a, b)] -> a -> b
+elookup ((x1, v1):env) x =
+ if x == x1 then v1 else elookup env x
+\end{lstlisting}
+
+\paragraph
+La fonction principale, qui s'occupe d'evaluer
+les expressions et retourner leur valeur, 
+en se basant sur le contexte fournie.
+
+\begin{lstlisting}
+eval :: [(Var, Val)] -> Exp -> Val
+\end{lstlisting}
+
+\begin{enumerate}
+\item Il n'y a rien a faire d'autre avec un chiffre que le retourner.
+\item Si l'on recoit une variable, l'on retourne sa valeur
+\item Une expr let permet de definir des nouvelles variables
+\item Les fonctions sont elles meme lier a des variables
+    et peuvent etre appeler par une expr call.
+\item Dans le cas d'un lambda, nous retournons sa valeur
+\end{enumerate}
+
+\begin{lstlisting}
+eval env (Enum n) = Vnum n
+
+eval env (Evar x) = elookup env x
+
+eval env (Elet x e1 e2) = 
+  let v = eval ((x,v):env) e2 in eval ((x,v):env) e2
+  
+eval env (Ecall fun actual) = 
+  case eval env fun of
+    Vlambda f -> f (eval env actual)
+    
+eval env (Elambda v e) = 
+  Vlambda (\value -> eval ((v, value) : env) e)
+\end{lstlisting}
+
+Le main permet tout simplement de taire le compilateur,
+nous ne pouvons directement utiliser notre evaluateur 
+sans definir des instances Show pour nos valeurs, ce qui
+est un peu difficile avec la definition de Vlambda.
+
+\begin{lstlisting}
+main = do print "done"
+\end{lstlisting}
+
+\end{document}
